@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>ChatIO</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<style>
+		body{
+			padding-top: 20px;
+			padding-bottom:20px;
+		}
+		#namesWrapper{
+			background-color: #d3d3d3;
+			height: 250px;
+			width: 950px;
+			padding-left: 50px;
+			padding-top:20px; 
+			/*display:none;*/
+		}
+		#mainWrapper{
+			display:none;
+			background-color: #d3d3d3;
+			height: 600px;
+			width: 950px;
+			padding-left: 50px;
+			padding-top:20px;
+		}
+		#chatWrapper{
+			background-color: #a5acb5;
+			width: 500px;
+			height: 500px;
+			padding-left: 10px;
+		}
+		#chatWindow{
+			background-color: #d3d3d3;
+			width: 480px;
+			height: 430px;
+			border: solid;
+		}
+		#usersWrapper{
+			background-color: #a5acb5;
+			width: 300px;
+			height: 300px;
+			float:right;
+			color: red;
+		}
+		#messageForm{
+			text-align: center;
+			padding-top: 20px;
+		}
+
+	</style>
+</head>
+<body>
+<div class="container">
+	<div id="namesWrapper">
+		<h2>ChatIO - A Simple Web Socket Chat App</h2>
+		<p> Enter your name to enter chat: </p>
+		<div id="error"> </div>
+		<form id="usernameForm">
+			<input type="text" size"35" id="username">
+			<input class="btn btn-primary" type="submit" value="Submit">
+		</form>
+	</div>
+
+	<div id="mainWrapper">
+		<h2>ChatIO - A simple Web Socket Chat App</h2>
+		<div class="rows">
+			<div class="col-md-6">
+				<div id="chatWrapper">
+					<div id="chatWindow"></div>
+					<form id="messageForm">
+						<input type="text" size"35" id="message" placeholder="Say something...">
+						<input class="btn btn-primary" type="submit" value="Submit">
+					</form>
+				</div>
+		
+			</div>
+
+			<div class="col-md-6">
+				<div id="usersWrapper">
+				<strong>User in chatroom: </strong>
+					<div id="users"></div>
+				</div>
+			</div>
+
+
+		</div>
+	</div>
+</div>
+
+<script src="//127.0.0.1/jquery.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+	$(function(){
+		var socket = io.connect();
+		var $messageForm = $('#messageForm');
+		var $message = $("#message");
+		var $chat = $("#chatWindow");
+		var $usernameForm = $('#usernameForm');
+		var $users = $('#users');
+		var $username = $('#username');
+		var $error = $('#error');
+
+		$usernameForm.submit(function(e){
+			e.preventDefault();
+			socket.emit('new user', $username.val(), function(data){
+				if(data){
+					$('#namesWrapper').hide();
+					$('#mainWrapper'). show();
+				} else {
+					$error.html('Username is taken');
+				}
+			});
+		});
+
+		socket.on('usernames', function(data){
+			var html = '';
+			for(i = 0; i < data.length; i++){
+				html += data[i] + '<br>';
+			}
+			$users.html(html);
+		});
+
+		$messageForm.submit(function(e){
+			e.preventDefault();
+			// catch the 'send message' event
+			// and return it to client as value of $message variable
+			socket.emit('send message', $message.val());
+			$message.val('');
+		});
+
+		// add message to the chat window
+		socket.on('new message', function(data){
+			$chat.append('<strong>- '+data.user+': </strong>'+data.msg+ '<br>');
+		});
+	});
+</script>
+</body>
+</html>
